@@ -6,10 +6,11 @@ PLEASE: The Python Low-energy Electron Analysis SuitE - Enabling rapid analysis 
 ### Current Version: 1.0.0
 
 # *NOTE* 
-This software package is modified to allow for an adjustment in the patch selection size done by the user. In the please.py source code file, code has been added to: 
- a) Add an input section and button for user in the Config Tab
- b) Add error messages for incorrect input 
- c) Change the default circle patch width from 8 int, to the user's input number
+This software package is modified to allow for an adjustment in the patch selection size done by the user. In the please.py source code file, code has been added to:
+
+ a) Add an input section and button for user in the Config Tab.
+ b) Add error messages for incorrect input.
+ c) Change the default circle patch width from 8 int, to the user's input number.
 ### - Jeannet Vargas
 ### Brookhaven National Laboratory Intern
 ### SULI Program Summer 2021

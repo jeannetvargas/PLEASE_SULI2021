@@ -5,6 +5,15 @@ PLEASE: The Python Low-energy Electron Analysis SuitE - Enabling rapid analysis 
 ### Affiliation: University of New Hampshire Department of Physics
 ### Current Version: 1.0.0
 
+# NOTE 
+This software package is modified to allow for an adjustment in the patch selection size done by the user. In the please.py source code file, code has been added to: 
+ a) Add an input section and button for user in the Config Tab
+ b) Add error messages for incorrect input 
+ c) Change the default circle patch width from 8 int, to the user's input number
+### - Jeannet Vargas
+### Brookhaven National Lab SULI Program Summer 2021
+
+
 # What is it?
 The **PLEASE** software package provides an open source cross-platform graphical user interface for rapid analysis and visualization of Low Energy Electron Microscopy (LEEM) and selected area micro-spot size Low Energy Electron Diffraction (µLEED) data sets. PLEASE is written in python using the PyQt and pyqtgraph python bindings for the Qt graphics framework.
 

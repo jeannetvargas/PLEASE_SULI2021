@@ -5,7 +5,7 @@ PLEASE: The Python Low-energy Electron Analysis SuitE - Enabling rapid analysis 
 ### Affiliation: University of New Hampshire Department of Physics
 ### Current Version: 1.0.0
 
-# *NOTE* 
+# *NOTE* - See README_Vargas.md for further information
 This software package has been modified to allow for an adjustment in the patch selection size done by the user. In the please.py source file, code has been added to:
 
   a) Add an input section and button for user in the Config Tab.

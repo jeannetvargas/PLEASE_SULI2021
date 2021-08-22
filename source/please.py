@@ -15,13 +15,26 @@ scale resolution to the surface structure of a wide array of materials from
 semiconductors to metals in bulk or thin film as well as single layer 2D materials.
 """
 
-"""PLEASE - UPDATE
+"""*** PLEASE - UPDATE ***
 -- Jeannet Vargas
 Brookhaven National Lab: SULI summer 2021
 
 Changes made that allow for user input for patch size, rather than the default of rad 8 for circles,
 This allows for the user to input an even integer in the configuration file for the patch width,
-and with that account for small selection areas for enhanced data extraction
+and with that account for small selection areas for enhanced data extraction.
+
+Patch size was successfully changed for user input, and image adjustment is currently in progress: need to determine
+functions to add a contrast change to loaded image once it is loaded as a 3D numpy array, and open
+the loaded images in menu bar along with a scroll bar (opencv trackbar) with the contrast change values to adjust
+the image. Other functions, like brightness change can later be made once algorithm for changes in numpy array are
+determined.
+
+These are first limited to LEEM functions in PLEASE program - Would only work under the LEEM tab in PLEASE
+once completed, image adjustment will be extended to LEED data sets. Since LEED data uses window extraction rather
+than circular patches, changes were not made.
+
+Code Changes made in: class Patchsize, def setupMenu, def initConfigTab, def validatePatchWidth,  def load_experiment,
+def handleLEEMClick, def adjustLoadedImage
 """
 # Stdlib and Scientific Stack imports
 import os
@@ -40,6 +53,7 @@ from experiment import Experiment
 from qthreads import WorkerThread
 from terminal import MessageConsole
 from yamloutput import ExperimentYAMLOutput
+from adjimage import ImageAdjust
 
 __Version = '1.0.0'
 
@@ -144,6 +158,7 @@ class MainWindow(QtWidgets.QMainWindow):
         LEEMMenu = self.menubar.addMenu("LEEM")
         LEEDMenu = self.menubar.addMenu("LEED")
         helpMenu = self.menubar.addMenu("Help")
+        imageMenu = self.menubar.addMenu("Image") ###new menu bar for image adjustment
 
         # File menu
         self.createYAMLAction = QtWidgets.QAction("Generate Experiment Config File", self)
@@ -234,6 +249,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.genConfigInfoFileAction = QtWidgets.QAction("Generate User Config File", self)
         self.genConfigInfoFileAction.triggered.connect(self.viewer.generateConfigInfo)
         helpMenu.addAction(self.genConfigInfoFileAction)
+
+
+        #### Image menu ######
+        self.adjustAction = QtWidgets.QAction("Adjust Loaded Image", self)
+        self.adjustAction.triggered.connect(self.viewer.adjustLoadedImage)
+        imageMenu.addAction(self.adjustAction)
+
+
 
     @staticmethod
     def quit():
@@ -638,7 +661,7 @@ class Viewer(QtWidgets.QWidget):
 
 
 #start of patch config settings -- add settings into config tab and connect 
-        #want a input window for int
+        #want a input text box for int
         LEEM_patch_settings_groupbox = QtWidgets.QGroupBox()#create group area for new settings
         LEEM_patch_settings_hbox = QtWidgets.QHBoxLayout()
         LEEM_patch_vbox = QtWidgets.QVBoxLayout()#apply vbox into hbox settings later
@@ -755,6 +778,7 @@ class Viewer(QtWidgets.QWidget):
             pass
         self.thread.start()
 
+
     def validateWidth(self):
         """Check user input and set crosshair line width."""
         w = self.crosshair_text.text()
@@ -813,7 +837,7 @@ class Viewer(QtWidgets.QWidget):
         else:
             try:
                 self.patch.setPatchWidth(pw)
-            except AttributeError:#patch size not instantiated maybe- default to 8
+            except AttributeError:#patch size not instantiated - default to 8
                 self.handleLEEMClick
         print ("Patch Width set to ", pw)
 
@@ -855,9 +879,10 @@ class Viewer(QtWidgets.QWidget):
         yamlFilter = "YAML (*.yaml);;YML (*.yml);;All Files (*)"
         homeDir = os.getenv("HOME")
         caption = "Select YAML Experiment Config File"
-        fileName = QtGui.QFileDialog.getOpenFileName(self, caption,
+        fileName = QtWidgets.QFileDialog.getOpenFileName(self, caption,
                                                      directory=homeDir,
                                                      filter=yamlFilter)
+        ###^^ fileName was QtGui.QFileDialog but wasnt working so changed to widgets- success
         if isinstance(fileName, str):
             config = fileName  # string path to .yaml or .yml config file
         elif isinstance(fileName, tuple):
@@ -1231,9 +1256,6 @@ class Viewer(QtWidgets.QWidget):
                         thread.start()
 
 
-
-
-
 #validate settings
 
     def validate_smoothing_settings(self, but=None):
@@ -1344,7 +1366,7 @@ class Viewer(QtWidgets.QWidget):
         print('File output successfully')
 
     @QtCore.pyqtSlot(np.ndarray)
-    def retrieve_LEEM_data(self, data):
+    def retrieve_LEEM_data(self, data):########## This loads the image I think 
         """Grab the 3d numpy array emitted from the data loading I/O thread."""
         self.leemdat.dat3d = data
         self.leemdat.dat3ds = data.copy()
@@ -1383,6 +1405,7 @@ class Viewer(QtWidgets.QWidget):
             self.leeddat.timelist = [k * time_step for k in range(self.leeddat.dat3d.shape[2])]
         return
 
+######
     @QtCore.pyqtSlot()
     def update_LEEM_img_after_load(self):
         """Called upon data loading I/O thread emitting finished signal."""
@@ -1445,6 +1468,11 @@ class Viewer(QtWidgets.QWidget):
                                               energy,
                                               unit))
         self.LEEMimageplotwidget.setFocus()
+
+
+    def adjustLoadedImage(self):
+        self.imageAdjustWidget = ImageAdjust()
+
 
     @QtCore.pyqtSlot()
     def update_LEED_img_after_load(self):
@@ -1637,10 +1665,6 @@ class Viewer(QtWidgets.QWidget):
             self.LEEMcircs = []
 
 
-
-
-
-
     def extractLEEMWindows(self):
         """Extract I(V) from User defined rectangular windows and Plot in main IV area."""
         if not self.hasdisplayedLEEMdata or not self.LEEMRects or self.LEEMRectCount == 0:
@@ -1739,8 +1763,6 @@ class Viewer(QtWidgets.QWidget):
         self.parentWidget().extractLEEMLineProfileAction.setEnabled(self.LEEMLineProfileEnabled)
 
 
-
-#circular patches
     def handleLEEMLineProfile(self, event):
         """Create QGraphicsLineItem objects from user click positions."""
         if not self.hasdisplayedLEEMdata:
@@ -1815,8 +1837,6 @@ class Viewer(QtWidgets.QWidget):
             self.LEEMivplotwidget.setLabel('bottom', 'Distance Along Line', units='[arb. units]', **self.labelStyle)
 
 
-
-
 #mouse click** rad = size of circle - default is 8- this has original circ info
     def handleLEEMClick(self, event):
         """User click registered in LEEMimage area.
@@ -1826,6 +1846,9 @@ class Viewer(QtWidgets.QWidget):
 
         Appends I(V) curve from clicked location to alternate plot window so
         as to not interfere with the live tracking plot.
+
+
+        Update Jeannet 2021: change radius of appended circle from default 8 to pw - user input 
         """
         if not self.hasdisplayedLEEMdata:
             return
@@ -1967,13 +1990,6 @@ class Viewer(QtWidgets.QWidget):
         pdi = pg.PlotDataItem(xdata, ydata, pen=pen)
         self.LEEMivplotwidget.getPlotItem().clear()
         self.LEEMivplotwidget.getPlotItem().addItem(pdi, clear=True)
-
-
-
-
-
-
-
 
 
     def handleLEEDClick(self, event):
@@ -2412,18 +2428,6 @@ class Viewer(QtWidgets.QWidget):
         self.LEEMcircs = []
 
 
-
-
-
-
-
-
-
-
-#contrast with arrow keys
-
-
-
     def keyPressEvent(self, event):
         """Set Arrow keys for navigation."""
         # LEEM Tab is active
@@ -2507,7 +2511,7 @@ class Viewer(QtWidgets.QWidget):
                                                   energy,
                                                   unit))
 
-    def showLEEMImage(self, idx):
+    def showLEEMImage(self, idx):####
         """Display LEEM image from main data array at index=idx."""
         if idx not in range(self.leemdat.dat3d.shape[2] - 1):
             return
